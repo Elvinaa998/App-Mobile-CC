@@ -1,10 +1,6 @@
 pipeline {
     agent any 
     
-    tools {
-        dockerTool 'Default' 
-    }
-    
     environment {
         DOCKER_IMAGE_NAME = "elvinapraktikum/todo-list-app" 
         DOCKERHUB_CREDENTIALS_ID = "dockerhub-creds" 
@@ -45,5 +41,4 @@ pipeline {
         }
     }
 }
-
 
