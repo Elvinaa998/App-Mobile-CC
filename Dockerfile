@@ -1,4 +1,4 @@
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 COPY package*.json ./
@@ -6,13 +6,12 @@ RUN npm install
 
 COPY . .
 
-RUN npx expo export:web
+RUN npx expo export
 
 FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
 
-COPY --from=build /app/dist /usr/share/nginx/html
+RUN rm -rf ./*
 
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
-
+COPY --from=build /app/dist .
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
