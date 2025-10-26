@@ -2,12 +2,12 @@ pipeline {
     agent any 
     
     tools {
-        docker 'Default' 
+        dockerTool 'Default' 
     }
     
     environment {
         DOCKER_IMAGE_NAME = "elvinapraktikum/todo-list-app" 
-        DOCKERHUB_CREDENTIALS_ID = "docker-hub" 
+        DOCKERHUB_CREDENTIALS_ID = "dockerhub-creds" 
     }
     
     stages {
@@ -45,4 +45,5 @@ pipeline {
         }
     }
 }
+
 
