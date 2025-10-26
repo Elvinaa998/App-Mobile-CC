@@ -2,7 +2,7 @@ pipeline {
     agent any 
     
     environment {
-        DOCKER_IMAGE_NAME = "elvinapraktikum/todo-list-app" 
+        DOCKER_IMAGE_NAME = "elvinatodo" 
         DOCKERHUB_CREDENTIALS_ID = "dockerhub-creds" 
     }
     
