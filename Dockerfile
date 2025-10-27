@@ -1,17 +1,18 @@
-FROM node:20-alpine AS build
+FROM node:20-alpine AS builder
 
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm install
+RUN npm install --no-audit
 
 COPY . .
 
-RUN npx expo export
+RUN npx expo export --output dist
 
 FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
 
-RUN rm -rf ./*
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-COPY --from=build /app/dist .
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
