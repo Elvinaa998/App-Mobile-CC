@@ -1,44 +1,41 @@
 pipeline {
     agent any
-    
     environment {
-        EAS_CREDENTIALS_ID = "eas-token" 
+        EAS_TOKEN = credentials('eas-token')
+        EAS_BUILD_COMMAND = "eas build --platform android --non-interactive --wait"
+        EAS_DOWNLOAD_COMMAND = "eas build:download --platform android --output=./app-release.apk"
     }
-    
+
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                bat 'docker run --rm -v "%CD%":/app -w /app node:20-alpine npm install --no-package-lock'
-            }
-        }
-        
         stage('Build APK with EAS') {
             steps {
-                withCredentials([string(credentialsId: EAS_CREDENTIALS_ID, variable: 'EAS_TOKEN')]) {
-                    bat '''
-                        docker run --rm -v "%CD%":/app -w /app -e EAS_TOKEN=%EAS_TOKEN% node:20-alpine sh -c "npm install -g eas-cli && eas build --platform android --non-interactive --wait --output=./app-release.apk"
-                    '''
-                }
+                bat "docker run --rm -v \"${env.WORKSPACE}\":/app -w /app -e EAS_TOKEN=\"${EAS_TOKEN}\" node:20-alpine sh -c \"npm install -g eas-cli && npm install --no-package-lock && ${EAS_BUILD_COMMAND}\""
+                
             }
         }
 
-        stage('Archive APK') {
+        stage('Download APK') {
             steps {
-                archiveArtifacts artifacts: 'app-release.apk', allowEmptyArchive: true
+                bat "docker run --rm -v \"${env.WORKSPACE}\":/app -w /app -e EAS_TOKEN=\"${EAS_TOKEN}\" node:20-alpine sh -c \"npm install -g eas-cli && ${EAS_DOWNLOAD_COMMAND}\""
+            }
+        }
+
+        stage('Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'app-release.apk', onlyIfSuccessful: true
             }
         }
     }
-    
+
     post {
         always {
             cleanWs()
         }
     }
 }
-
