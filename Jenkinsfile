@@ -14,7 +14,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                bat 'docker run --rm -v "%CD%":/app -w /app node:20-alpine npm install'
+                bat 'docker run --rm -v "%CD%":/app -w /app node:20-alpine npm install --no-package-lock'
             }
         }
         
@@ -22,7 +22,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: EAS_CREDENTIALS_ID, variable: 'EAS_TOKEN')]) {
                     bat '''
-                        docker run --rm -v "%CD%":/app -w /app -e EAS_TOKEN=%EAS_TOKEN% node:20-alpine sh -c "npm install -g eas-cli && eas login --token $EAS_TOKEN && eas build --platform android --non-interactive --wait --output=./app-release.apk"
+                        docker run --rm -v "%CD%":/app -w /app -e EAS_TOKEN=%EAS_TOKEN% node:20-alpine sh -c "npm install -g eas-cli && eas login --token $EAS_TOKEN && eas build --platform android --non-interactive --wait --output=./app-release.apk --no-install"
                     '''
                 }
             }
