@@ -1,9 +1,8 @@
 pipeline {
     agent any
     environment {
-        EAS_TOKEN = credentials('eas-token')
-        EAS_BUILD_COMMAND = "eas build --platform android --non-interactive --wait"
-        EAS_DOWNLOAD_COMMAND = "eas build:download --platform android --output=./app-release.apk"
+        DOCKER_IMAGE_NAME = "elelngelina/todo-list-app"
+        DOCKERHUB_CREDENTIALS_ID = "dockerhub-creds"
     }
 
     stages {
@@ -13,22 +12,18 @@ pipeline {
             }
         }
 
-        stage('Build APK with EAS') {
+        stage('Build Docker Image') {
             steps {
-                bat "docker run --rm -v \"${env.WORKSPACE}\":/app -w /app -e EAS_TOKEN=\"${EAS_TOKEN}\" node:20-alpine sh -c \"npm install -g eas-cli && npm install --no-package-lock && ${EAS_BUILD_COMMAND}\""
+                bat "docker login -u %DOCKER_IMAGE_NAME:0% -p %DOCKERHUB_CREDENTIALS_ID% registry.hub.docker.com"
                 
+                bat "docker build -t %DOCKER_IMAGE_NAME%:%GIT_COMMIT% -t %DOCKER_IMAGE_NAME%:latest ."
             }
         }
 
-        stage('Download APK') {
+        stage('Push to DockerHub') {
             steps {
-                bat "docker run --rm -v \"${env.WORKSPACE}\":/app -w /app -e EAS_TOKEN=\"${EAS_TOKEN}\" node:20-alpine sh -c \"npm install -g eas-cli && ${EAS_DOWNLOAD_COMMAND}\""
-            }
-        }
-
-        stage('Archive Artifact') {
-            steps {
-                archiveArtifacts artifacts: 'app-release.apk', onlyIfSuccessful: true
+                bat "docker push %DOCKER_IMAGE_NAME%:latest"
+                bat "docker push %DOCKER_IMAGE_NAME%:%GIT_COMMIT%"
             }
         }
     }
