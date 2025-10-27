@@ -1,8 +1,10 @@
 pipeline {
     agent any
     environment {
-        DOCKER_IMAGE_NAME = "elelngelina/todo-list-app"
+        DOCKER_USER = "elelngelina" 
         DOCKERHUB_CREDENTIALS_ID = "dockerhub-creds"
+        DOCKER_IMAGE_NAME = "elelngelina/todo-list-app" 
+        GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
     }
 
     stages {
@@ -14,7 +16,9 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat "docker login -u %DOCKER_IMAGE_NAME:0% -p %DOCKERHUB_CREDENTIALS_ID% registry.hub.docker.com"
+                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
+                }
                 
                 bat "docker build -t %DOCKER_IMAGE_NAME%:%GIT_COMMIT% -t %DOCKER_IMAGE_NAME%:latest ."
             }
