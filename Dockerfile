@@ -7,7 +7,7 @@ RUN npm install --no-audit
 
 COPY . .
 
-RUN npx expo export --output dist
+RUN npx expo export
 
 FROM nginx:alpine
 
