@@ -4,7 +4,7 @@ pipeline {
         DOCKER_USER = "elelngelina" 
         DOCKERHUB_CREDENTIALS_ID = "dockerhub-creds"
         DOCKER_IMAGE_NAME = "elelngelina/todo-list-app" 
-        GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+        GIT_COMMIT = bat(returnStdout: true, script: 'git rev-parse --short HEAD').trim() 
     }
 
     stages {
