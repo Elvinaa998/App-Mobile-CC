@@ -1,42 +1,46 @@
 pipeline {
-    agent any 
+    agent {
+        docker { image 'node:20-alpine' }
+    }
     
     environment {
-        DOCKER_IMAGE_NAME = "elelngelina/elvinatodo" 
-        DOCKERHUB_CREDENTIALS_ID = "dockerhub-creds" 
+        EAS_CREDENTIALS_ID = "eas-token" 
     }
     
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                echo 'Kode sudah di-checkout.'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
             }
         }
         
-        stage('Build and Push to DockerHub') {
+        stage('Build APK with EAS') {
             steps {
                 script {
-                    echo "Membangun image Docker: ${DOCKER_IMAGE_NAME}"
-                    
-                    def dockerImage = docker.build(DOCKER_IMAGE_NAME)
-
-                    echo "Pushing image ke DockerHub..."
-                    
-                    docker.withRegistry('https://registry.hub.docker.com', DOCKERHUB_CREDENTIALS_ID) {
-                        
-                        dockerImage.push('latest')
-                        
+                    sh 'npm install -g eas-cli'
+                    withCredentials([string(credentialsId: EAS_CREDENTIALS_ID, variable: 'EAS_TOKEN')]) {
+                        sh 'eas login --token $EAS_TOKEN'
                     }
-                    echo "Image berhasil di-push ke DockerHub."
+                    sh 'eas build --platform android --non-interactive --wait --output=./app-release.apk'
                 }
+            }
+        }
+
+        stage('Archive APK') {
+            steps {
+                archiveArtifacts artifacts: 'app-release.apk', allowEmptyArchive: true
             }
         }
     }
     
     post {
         always {
-            echo 'Pipeline selesai.'
             cleanWs()
         }
     }
