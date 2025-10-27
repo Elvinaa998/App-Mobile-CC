@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        docker { image 'node:20-alpine' }
-    }
+    agent any
     
     environment {
         EAS_CREDENTIALS_ID = "eas-token" 
@@ -16,18 +14,16 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                bat 'docker run --rm -v "%CD%":/app -w /app node:20-alpine npm install'
             }
         }
         
         stage('Build APK with EAS') {
             steps {
-                script {
-                    sh 'npm install -g eas-cli'
-                    withCredentials([string(credentialsId: EAS_CREDENTIALS_ID, variable: 'EAS_TOKEN')]) {
-                        sh 'eas login --token $EAS_TOKEN'
-                    }
-                    sh 'eas build --platform android --non-interactive --wait --output=./app-release.apk'
+                withCredentials([string(credentialsId: EAS_CREDENTIALS_ID, variable: 'EAS_TOKEN')]) {
+                    bat '''
+                        docker run --rm -v "%CD%":/app -w /app -e EAS_TOKEN=%EAS_TOKEN% node:20-alpine sh -c "npm install -g eas-cli && eas login --token $EAS_TOKEN && eas build --platform android --non-interactive --wait --output=./app-release.apk"
+                    '''
                 }
             }
         }
